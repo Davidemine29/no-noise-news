@@ -8,11 +8,14 @@
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
+            --ad-bg: #1e1b4b;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --accent-color: #38bdf8;
             --hashtag-color: #818cf8;
             --border-color: #334155;
+            --ad-border: #6366f1;
+            --sponsor-badge: #f59e0b;
         }
 
         body {
@@ -25,7 +28,7 @@
 
         .header-container {
             max-width: 1200px;
-            margin: 0 auto 30px auto;
+            margin: 0 auto 20px auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -53,6 +56,19 @@
             opacity: 0.9;
         }
 
+        /* BANNER PUBBLICITARIO SUPERIORE */
+        .top-ad-banner {
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+            background-color: var(--card-bg);
+            border: 1px dashed var(--ad-border);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
         .grid {
             max-width: 1200px;
             margin: 0 auto;
@@ -74,6 +90,22 @@
         .card:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        /* STILE SPECIFICO PER CARD SPONSORIZZATE / AFFILIATE */
+        .card-sponsored {
+            background-color: var(--ad-bg);
+            border: 1px solid var(--ad-border);
+        }
+
+        .sponsor-badge {
+            background-color: var(--sponsor-badge);
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
         }
 
         .card-img {
@@ -141,9 +173,14 @@
             text-decoration: underline;
         }
 
-        .card-date {
-            font-size: 0.75rem;
-            color: var(--text-muted);
+        .btn-affiliate {
+            background-color: var(--ad-border);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -154,26 +191,42 @@
         <a href="/refresh" class="btn-refresh">🔄 Aggiorna Notizie</a>
     </div>
 
+    <!-- SPORTELLO BANNER HEADER (AdSense / Carbon Ads) -->
+    <div class="top-ad-banner">
+        <!-- Incolla qui il codice fornito da AdSense / Ezoic / Carbon Ads -->
+        <span>SPAZIO PUBBLICITARIO BANNER (728x90 / Carbon Ads)</span>
+    </div>
+
     <div class="grid">
         {% for article in articles %}
+        
+        <!-- INSERISCI UNA CARD SPONSORIZZATA/AFFILIATA OGNI 3 NOTIZIE -->
+        {% if loop.index == 3 %}
+        <div class="card card-sponsored">
+            <img src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=60" alt="Hardware Wallet" class="card-img">
+            <div class="card-body">
+                <span class="card-category">PROMOZIONALE <span class="sponsor-badge">SPONSOR</span></span>
+                <h2 class="card-title">Proteggi i tuoi Asset Crypto con un Hardware Wallet</h2>
+                <p class="card-description">Metti al sicuro le tue chiavi private offline. Scopri le offerte sulle soluzioni di archiviazione con supporto multi-chain.</p>
+                <div class="card-hashtags">#CryptoSecurity #HardwareWallet #Web3</div>
+                <div class="card-footer">
+                    <!-- Sostituisci questo link con il tuo referral link (es. Ledger/Trezor) -->
+                    <a href="https://example.com/affiliate-link" target="_blank" class="btn-affiliate">Scopri l'offerta &rarr;</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- CARD NOTIZIA NORMALE -->
         <div class="card">
-            <!-- IMMAGINE REALE -->
             <img src="{{ article.image_url }}" alt="News Image" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'">
             
             <div class="card-body">
-                <!-- CATEGORIA -->
                 <span class="card-category">{{ article.category }}</span>
-                
-                <!-- TITOLO -->
                 <h2 class="card-title">{{ article.title }}</h2>
-                
-                <!-- DESCRIZIONE CON INVITO AL CLICK -->
                 <p class="card-description">{{ article.content }}</p>
-                
-                <!-- HASHTAG DELL'ARTICOLO -->
                 <div class="card-hashtags">{{ article.hashtags }}</div>
                 
-                <!-- FOOTER CARD -->
                 <div class="card-footer">
                     <a href="{{ article.url }}" target="_blank" class="card-link">Leggi su Fonte Ufficiale &rarr;</a>
                 </div>
