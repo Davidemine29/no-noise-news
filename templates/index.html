@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>No Nise News - Verification Dashboard</title>
+  <title>News dal Futuro - Il tuo Radar sulle Tecnologie di Domani</title>
   
   <style>
     * {
@@ -14,8 +14,8 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #f0f2f5;
-      color: #1c1e21;
+      background-color: #0b0f19;
+      color: #e2e8f0;
       padding: 20px;
     }
 
@@ -25,24 +25,62 @@
       padding-bottom: 90px;
     }
 
+    /* HEADER & LOGO */
     header {
-      margin-bottom: 24px;
+      margin-bottom: 32px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(30, 41, 59, 0.7);
+      padding: 12px 24px;
+      border-radius: 50px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
     }
 
     header h1 {
-      color: #0d6efd;
+      color: #ffffff;
       font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
     }
 
+    header p {
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    /* CARDS NOTIZIE FUTURISTICHE */
     .news-card {
-      background-color: #ffffff;
-      border-radius: 12px;
+      background-color: #1e293b;
+      border-radius: 16px;
       overflow: hidden;
       margin-bottom: 24px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      border-left: 5px solid #198754;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      border: 1px solid #334155;
       animation: fadeIn 0.4s ease-in-out;
+      transition: transform 0.2s ease;
+    }
+
+    .news-card:hover {
+      transform: translateY(-2px);
+      border-color: #38bdf8;
     }
 
     @keyframes fadeIn {
@@ -52,10 +90,10 @@
 
     .news-image {
       width: 100%;
-      height: 260px;
+      height: 240px;
       object-fit: cover;
       display: block;
-      background-color: #e9ecef;
+      background-color: #0f172a;
     }
 
     .news-content {
@@ -64,58 +102,64 @@
 
     .news-card .badge {
       display: inline-block;
-      background-color: #e8f5e9;
-      color: #198754;
+      background: rgba(56, 189, 248, 0.1);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
       font-size: 0.75rem;
-      font-weight: bold;
-      padding: 4px 8px;
-      border-radius: 4px;
-      margin-bottom: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
       text-transform: uppercase;
     }
 
     .news-card .hashtags {
       display: block;
-      color: #0d6efd;
+      color: #818cf8;
       font-size: 0.85rem;
       font-weight: 500;
-      margin-top: 10px;
+      margin-top: 12px;
     }
 
     .news-card h2 {
       font-size: 1.3rem;
       margin-bottom: 10px;
-      color: #111;
-      line-height: 1.3;
+      color: #f8fafc;
+      line-height: 1.35;
     }
 
     .news-card p {
-      color: #33373d;
-      font-size: 0.98rem;
-      line-height: 1.55;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      line-height: 1.6;
     }
 
     .news-card a.read-more {
-      display: inline-block;
-      margin-top: 12px;
-      color: #0d6efd;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      color: #38bdf8;
       text-decoration: none;
       font-weight: 600;
       font-size: 0.9rem;
+      transition: gap 0.2s ease;
     }
 
     .news-card a.read-more:hover {
-      text-decoration: underline;
+      gap: 10px;
+      color: #7dd3fc;
     }
 
     .loading-sentinel {
       text-align: center;
       padding: 25px 0;
-      color: #6c757d;
+      color: #64748b;
       font-size: 0.95rem;
       font-weight: 500;
     }
 
+    /* PULSANTE AGGIORNA FLOATING */
     .btn-refresh-fixed {
       position: fixed;
       bottom: 24px;
@@ -125,20 +169,20 @@
       align-items: center;
       gap: 10px;
       padding: 14px 24px;
-      background-color: #0d6efd;
+      background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
       color: #ffffff;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       border: none;
       border-radius: 50px;
-      box-shadow: 0 4px 14px rgba(13, 110, 253, 0.39);
+      box-shadow: 0 4px 20px rgba(2, 132, 199, 0.4);
       cursor: pointer;
-      transition: transform 0.2s ease, background-color 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .btn-refresh-fixed:hover {
-      background-color: #0b5ed7;
       transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(2, 132, 199, 0.6);
     }
 
     .spin {
@@ -154,20 +198,28 @@
 
   <div class="container">
     <header>
-      <h1>No Nise News</h1>
-      <p>Feed notizie verificate e analisi anti-disinformazione</p>
+      <div class="logo-container">
+        <!-- LOGO VETTORIALE SVG (Atom & Pulse) -->
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="3" fill="#38bdf8"/>
+          <ellipse cx="12" cy="12" rx="9" ry="4" stroke="#818cf8" stroke-width="1.5" transform="rotate(30 12 12)"/>
+          <ellipse cx="12" cy="12" rx="9" ry="4" stroke="#38bdf8" stroke-width="1.5" transform="rotate(-30 12 12)"/>
+        </svg>
+        <h1>News dal Futuro</h1>
+      </div>
+      <p>Il radar in tempo reale su Intelligenza Artificiale, Calcolo Quantistico e Cripto</p>
     </header>
 
     <main id="news-feed"></main>
 
     <div id="sentinel" class="loading-sentinel">
-      <span id="sentinel-text">Caricamento notizie...</span>
+      <span id="sentinel-text">Caricamento notizie dal futuro...</span>
     </div>
   </div>
 
   <button id="refresh-btn" class="btn-refresh-fixed" onclick="handleRefresh()">
-    <span id="refresh-icon">🔄</span>
-    <span>Sincronizza Feed</span>
+    <span id="refresh-icon">⚡</span>
+    <span>Sincronizza Radar</span>
   </button>
 
   <script>
@@ -191,7 +243,9 @@
           <h2>${article.title}</h2>
           <p>${article.content}</p>
           <span class="hashtags">${article.hashtags}</span>
-          <a class="read-more" href="${article.url}" target="_blank" rel="noopener noreferrer">Leggi fonte originale →</a>
+          <a class="read-more" href="${article.url}" target="_blank" rel="noopener noreferrer">
+            Leggi articolo originale <span>→</span>
+          </a>
         </div>
       `;
       return card;
@@ -202,7 +256,7 @@
       isLoading = true;
 
       const sentinelText = document.getElementById('sentinel-text');
-      sentinelText.textContent = "Caricamento notizie dal server...";
+      sentinelText.textContent = "Connessione alle fonti in corso...";
 
       try {
         const response = await fetch(`/api/articles?page=${currentPage}&limit=5`);
@@ -222,13 +276,13 @@
           hasMoreArticles = data.has_more;
           
           if (!hasMoreArticles) {
-            sentinelText.textContent = "Hai letto tutte le notizie disponibili.";
+            sentinelText.textContent = "Hai consultato tutti i report disponibili.";
           } else {
-            sentinelText.textContent = "Scorri per altre notizie...";
+            sentinelText.textContent = "Scorri per esplorare altre notizie...";
           }
         } else {
           hasMoreArticles = false;
-          sentinelText.textContent = "Nessuna notizia nel database. Clicca su 'Sincronizza Feed'.";
+          sentinelText.textContent = "Nessun report trovato. Clicca su 'Sincronizza Radar'.";
         }
       } catch (error) {
         console.error("Errore nel recupero notizie:", error);
