@@ -154,7 +154,7 @@
 
     <!-- Target per l'Intersection Observer (infinite scroll) -->
     <div id="sentinel" class="loading-sentinel">
-      <span>Caricamento nuove analisi in corso...</span>
+      <span>Generazione nuove verifiche in corso...</span>
     </div>
   </div>
 
@@ -165,58 +165,90 @@
   </button>
 
   <script>
-    // MATRICE TEMATICA PER GENERAZIONE INFINITA DI ARTICOLI COERENTI
-    const newsDatabase = [
-      {
-        topic: "ai",
-        title: "Verifica fonti su intelligenza artificiale e deepfake nei media",
-        summary: "I laboratori di fact-checking hanno identificato una nuova campagna di contenuti sintetici generati per alterare le dichiarazioni pubbliche. Il modello di analisi basato su filigrana digitale e verifica spettrale delle frequenze vocali ha confermato la falsificazione dei filmati analizzati nelle ultime 48 ore, ripristinando la tracciabilità della fonte originale.",
-        imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=700&q=80"
-      },
-      {
-        topic: "weather",
-        title: "Smentita la circolare d'allarme sui report meteorologici regionali",
-        summary: "In seguito alla rapida diffusione di bollettini non ufficiali riguardanti eventi climatici estremi, la rete di monitoraggio ambientale ha pubblicato i dati radar grezzi. L'analisi incrociata tra stazioni terra ed elaborazioni satellitari mostra valori rientranti nelle medie stagionali, smentendo i grafici alterati distribuiti sui canali social.",
-        imageUrl: "https://images.unsplash.com/photo-1590055531615-f16d36ffe8ec?auto=format&fit=crop&w=700&q=80"
-      },
-      {
-        topic: "cybersecurity",
-        title: "Neutralizzata rete di profilazione e bot automatizzati",
-        summary: "Un'operazione congiunta di sicurezza informatica ha bloccato un'infrastruttura di oltre 15.000 profili sintetici dedicati all'amplificazione artificiale di fake news di ambito economico. I bot sfruttavano algoritmi di ricondivisione a cascata per posizionare parole chiave fraudolente nei trend di ricerca principali.",
-        imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=700&q=80"
-      },
-      {
-        topic: "health",
-        title: "Analisi clinica indipendente smentisce il report virale su integratori",
-        summary: "Un presunto studio scientifico privo di revisione tra pari affermava la pericolosità di alcuni trattamenti medici standard. Le verifiche condotte dagli istituti di sanità hanno dimostrato la falsificazione dei campioni statistici citati nella pubblicazione, confermando l'assoluta validità delle linee guida ufficiali vigente.",
-        imageUrl: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=700&q=80"
-      },
-      {
-        topic: "finance",
-        title: "Chiarimento dell'organismo di controllo sulle speculazioni di mercato",
-        summary: "Dopo il panico generato da un documento di bilancio contraffatto diffuso su piattaforme di trading, gli organi di vigilanza hanno rilasciato il prospetto finanziario autenticato tramite tecnologia blockchain. Il titolo interessato ha ripreso la regolare quotazione dopo il blocco cauzionale di tutela.",
-        imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=700&q=80"
-      },
-      {
-        topic: "energy",
-        title: "Report di sostenibilità: smentite le stime alterate sulle fonti di rete",
-        summary: "Un'analisi dettagliata sui flussi energetici regionali ha smentito le notizie circolate in merito all'inefficienza degli impianti rinnovabili di nuova installazione. I dati effettivi registrano una stabilità della rete superiore del 18% rispetto ai dati diffusi dai blog non verificati.",
-        imageUrl: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=700&q=80"
-      }
+    // MATRICI PER LA GENERAZIONE PROCEDURALE ANTI-FAKE NEWS
+    const topics = [
+      { name: "Intelligenza Artificiale", tag: "technology", imgKeyword: "computer,tech" },
+      { name: "Sostenibilità Ambientale", tag: "environment", imgKeyword: "nature,forest" },
+      { name: "Sicurezza Informatica", tag: "security", imgKeyword: "code,data" },
+      { name: "Mercati Finanziari", tag: "finance", imgKeyword: "city,business" },
+      { name: "Salute e Medicina", tag: "health", imgKeyword: "science,laboratory" },
+      { name: "Automotive ed Energia", tag: "energy", imgKeyword: "car,energy" }
     ];
 
-    let generatedCount = 0;
+    const triggers = [
+      "Smentita la circolare virale su ipotetici rischi imminenti",
+      "Analisi indipendente chiarisce l'inconsistenza dei report circolati",
+      "Rilevato un nuovo pattern di disinformazione coordinata",
+      "Verifica delle fonti sui dati difformi diffusi nelle ultime ore",
+      "Neutralizzata campagna di notizie alterate ad alto impatto"
+    ];
+
+    const methods = [
+      "I controlli incrociati condotti dai laboratori di fact-checking mediante analisi spettrale e verifica dei registri ufficiali",
+      "L'esame dei dati grezzi estratti dai sensori di monitoraggio e validati da enti terzi indipendenti",
+      "L'audit tecnico eseguito sugli algoritmi di distribuzione delle notizie e sulle catene di tracciabilità digitale",
+      "Il confronto sistematico tra i report preliminari non verificati e i protocolli ufficiali approvati"
+    ];
+
+    const impacts = [
+      "hanno confermato la completa manipolazione dei contenuti, ripristinando la corretta ricostruzione dei fatti.",
+      "hanno evidenziato una percentuale di errore nei dati diffusi superiore all'80%, smentendo ogni allarme.",
+      "hanno permesso di identificare la fonte originaria della falsificazione e di chiarire la natura del malinteso.",
+      "hanno dimostrato l'assoluta conformità degli standard di sicurezza vigenti rispetto alle voci smentite."
+    ];
+
+    // Registro combinazioni già generate per evitare qualsiasi duplicato
+    const generatedHashes = new Set();
+    let globalCounter = 0;
     let isLoading = false;
 
-    // Genera una card notizia con immagine pertinata e riassunto corposo
-    function createNewsCard(item, instanceId) {
+    // ALGORITMO PROCEDURALE ANTI-REPETIZIONE
+    function generateUniqueArticle() {
+      let topic, trigger, method, impact, hash;
+      let attempts = 0;
+
+      // Continua a ciclare finché non trova una combinazione mai creata prima
+      do {
+        topic = topics[Math.floor(Math.random() * topics.length)];
+        trigger = triggers[Math.floor(Math.random() * triggers.length)];
+        method = methods[Math.floor(Math.random() * methods.length)];
+        impact = impacts[Math.floor(Math.random() * impacts.length)];
+        
+        hash = `${topic.name}-${trigger.substring(0, 10)}-${method.substring(0, 10)}`;
+        attempts++;
+      } while (generatedHashes.has(hash) && attempts < 100);
+
+      generatedHashes.add(hash);
+      globalCounter++;
+
+      const title = `${topic.name}: ${trigger}`;
+      const summary = `${method} ${impact} L'analisi dettagliata conferma l'importanza di fare riferimento esclusivo a canali d'informazione certificati.`;
+      
+      // Generazione immagine pertinente tramite Unsplash con lock per evitare immagini identiche
+      const imageUrl = `https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=700&q=80`;
+      const dynamicImgUrl = `https://loremflickr.com/700/350/${topic.imgKeyword}?lock=${globalCounter}`;
+
+      return {
+        id: globalCounter,
+        title: title,
+        summary: summary,
+        image: dynamicImgUrl
+      };
+    }
+
+    // Costruisce la carta della notizia
+    function createNewsCard(item) {
       const article = document.createElement('article');
       article.className = 'news-card';
 
       article.innerHTML = `
-        <img class="news-image" src="${item.imageUrl}" alt="${item.title}" loading="lazy">
+        <img class="news-image" 
+             src="${item.image}" 
+             alt="${item.title}" 
+             loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=700&q=80'">
         <div class="news-content">
-          <span class="badge">Verificato #${instanceId}</span>
+          <span class="badge">Fact-Check #${item.id}</span>
           <h2>${item.title}</h2>
           <p>${item.summary}</p>
         </div>
@@ -224,7 +256,7 @@
       return article;
     }
 
-    // ALGORITMO DI SCROLL INFINITO REALE (Generatore continuativo)
+    // Caricamento asincrono al raggiungimento del fondo della pagina
     function loadMoreNews(count = 2) {
       if (isLoading) return;
       isLoading = true;
@@ -233,33 +265,30 @@
 
       setTimeout(() => {
         for (let i = 0; i < count; i++) {
-          generatedCount++;
-          // Seleziona la base tematica a rotazione senza mai esaurirsi
-          const baseTopic = newsDatabase[(generatedCount - 1) % newsDatabase.length];
-          
-          feed.appendChild(createNewsCard(baseTopic, generatedCount));
+          const newArticle = generateUniqueArticle();
+          feed.appendChild(createNewsCard(newArticle));
         }
         isLoading = false;
       }, 400);
     }
 
-    // Gestione click pulsante "Aggiorna news" (Reset + Ricaricamento)
+    // Pulsante "Aggiorna news": svuota il feed e genera nuovi articoli
     function handleRefresh() {
       const icon = document.getElementById('refresh-icon');
       const feed = document.getElementById('news-feed');
       
       icon.classList.add('spin');
+      feed.innerHTML = '';
       
+      loadMoreNews(3);
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       setTimeout(() => {
-        feed.innerHTML = '';
-        generatedCount = 0;
-        loadMoreNews(3);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
         icon.classList.remove('spin');
       }, 600);
     }
 
-    // Inizializzazione Intersection Observer per Infinite Scroll senza limiti
+    // Observer per lo scroll infinito
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting && !isLoading) {
@@ -267,10 +296,10 @@
         }
       });
     }, {
-      rootMargin: '250px' // Attiva il caricamento 250px prima della fine
+      rootMargin: '250px'
     });
 
-    // Avvio iniziale
+    // Inizializzazione
     document.addEventListener('DOMContentLoaded', () => {
       loadMoreNews(3);
       observer.observe(document.getElementById('sentinel'));
