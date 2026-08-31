@@ -38,22 +38,38 @@ def save_article(title, url, content, image_url, category, hashtags, created_at)
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     try:
+        # INSERT OR IGNORE: se l'articolo esiste già non lo sovrascrive, mantenendo lo storico
         cursor.execute('''
-            INSERT INTO articles (title, url, content, image_url, category, hashtags, created_at)
+            INSERT OR IGNORE INTO articles (title, url, content, image_url, category, hashtags, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(url) DO UPDATE SET
-                title=excluded.title,
-                content=excluded.content,
-                image_url=excluded.image_url,
-                category=excluded.category,
-                hashtags=excluded.hashtags,
-                created_at=excluded.created_at
         ''', (title, url, content, image_url, category, hashtags, created_at))
         conn.commit()
     except Exception as e:
         print(f"⚠️ Errore salvataggio DB: {e}")
     finally:
         conn.close()
+
+def get_paged_articles(page=1, limit=5):
+    """Estrae solo il blocco di notizie necessario per la pagina richiesta."""
+    init_db()
+    offset = (page - 1) * limit
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT id, title, url, content, image_url, category, hashtags, created_at 
+        FROM articles 
+        ORDER BY id DESC 
+        LIMIT ? OFFSET ?
+    ''', (limit, offset))
+    
+    rows = cursor.fetchall()
+    
+    cursor.execute('SELECT COUNT(*) FROM articles')
+    total_count = cursor.fetchone()[0]
+    
+    conn.close()
+    return rows, total_count
 
 def get_all_articles():
     init_db()
