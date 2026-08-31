@@ -1,5 +1,4 @@
 import feedparser
-import feedparser
 import re
 from bs4 import BeautifulSoup
 from database import init_db, save_article
@@ -44,11 +43,9 @@ def extract_image_from_entry(entry):
     return None
 
 def generate_hashtags(title, category):
-    """Genera hashtag dinamici e pertinenti analizzando titolo e categoria."""
     title_lower = title.lower()
     tags = set()
     
-    # Tag per Categoria
     if "Quantum" in category:
         tags.add("#QuantumComputing")
         tags.add("#DeepTech")
@@ -59,7 +56,6 @@ def generate_hashtags(title, category):
         tags.add("#Crypto")
         tags.add("#Web3")
         
-    # Tag specifici per contenuto
     if "ai" in title_lower or "artificial intelligence" in title_lower:
         tags.add("#AI")
         tags.add("#TechTrends")
@@ -73,7 +69,6 @@ def generate_hashtags(title, category):
     if "sec" in title_lower or "regulation" in title_lower:
         tags.add("#Regulation")
         
-    # Fallback se ne ha trovati pochi
     if len(tags) < 2:
         tags.add("#Innovation")
         tags.add("#GlobalTech")
@@ -81,7 +76,6 @@ def generate_hashtags(title, category):
     return " ".join(list(tags)[:3])
 
 def create_engaging_description(raw_html):
-    """Pulisce il testo e crea una descrizione accattivante che spinge al click."""
     if not raw_html:
         return "Tutti i dettagli e le implicazioni di questa svolta nell'articolo completo."
         
@@ -91,7 +85,6 @@ def create_engaging_description(raw_html):
     if not text:
         return "Scopri i retroscena e l'impatto sul settore nell'analisi completa."
         
-    # Taglio pulito a ~200 caratteri
     if len(text) > 200:
         text = text[:197].rsplit(' ', 1)[0] + "..."
         
@@ -107,7 +100,8 @@ def run_pipeline():
         for url in urls:
             try:
                 parsed_feed = feedparser.parse(url)
-                for entry in parsed_feed.entries[:5]:
+                # Legge fino a 15 notizie per ciascun feed invece di 5
+                for entry in parsed_feed.entries[:15]:
                     title = entry.get('title', 'Titolo non disponibile')
                     link = entry.get('link', '#')
                     raw_summary = entry.get('summary', entry.get('description', ''))
