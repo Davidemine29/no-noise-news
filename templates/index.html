@@ -6,7 +6,6 @@
   <title>No Nise News - Verification Dashboard</title>
   
   <style>
-    /* RESET E STILI BASE */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -20,7 +19,6 @@
       padding: 20px;
     }
 
-    /* CONTENITORE PRINCIPALE FEED */
     .container {
       max-width: 680px;
       margin: 0 auto;
@@ -37,7 +35,6 @@
       font-size: 1.8rem;
     }
 
-    /* CARDS DELLE NOTIZIE CON IMMAGINI */
     .news-card {
       background-color: #ffffff;
       border-radius: 12px;
@@ -77,6 +74,14 @@
       text-transform: uppercase;
     }
 
+    .news-card .hashtags {
+      display: block;
+      color: #0d6efd;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+
     .news-card h2 {
       font-size: 1.3rem;
       margin-bottom: 10px;
@@ -90,7 +95,19 @@
       line-height: 1.55;
     }
 
-    /* CARICAMENTO IN FONDO (INFINITE SCROLL) */
+    .news-card a.read-more {
+      display: inline-block;
+      margin-top: 12px;
+      color: #0d6efd;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .news-card a.read-more:hover {
+      text-decoration: underline;
+    }
+
     .loading-sentinel {
       text-align: center;
       padding: 25px 0;
@@ -99,23 +116,19 @@
       font-weight: 500;
     }
 
-    /* PULSANTE AGGIORNA FIXED IN BASSO A DESTRA */
     .btn-refresh-fixed {
       position: fixed;
       bottom: 24px;
       right: 24px;
       z-index: 1000;
-
       display: flex;
       align-items: center;
       gap: 10px;
-
       padding: 14px 24px;
       background-color: #0d6efd;
       color: #ffffff;
       font-size: 1rem;
       font-weight: 600;
-
       border: none;
       border-radius: 50px;
       box-shadow: 0 4px 14px rgba(13, 110, 253, 0.39);
@@ -126,10 +139,6 @@
     .btn-refresh-fixed:hover {
       background-color: #0b5ed7;
       transform: translateY(-2px);
-    }
-
-    .btn-refresh-fixed:active {
-      transform: translateY(0);
     }
 
     .spin {
@@ -149,159 +158,122 @@
       <p>Feed notizie verificate e analisi anti-disinformazione</p>
     </header>
 
-    <!-- FEED NEWS COMPLETO -->
     <main id="news-feed"></main>
 
-    <!-- Target per l'Intersection Observer (infinite scroll) -->
     <div id="sentinel" class="loading-sentinel">
-      <span>Generazione nuove verifiche in corso...</span>
+      <span id="sentinel-text">Caricamento notizie...</span>
     </div>
   </div>
 
-  <!-- PULSANTE AGGIORNA FIXED -->
   <button id="refresh-btn" class="btn-refresh-fixed" onclick="handleRefresh()">
     <span id="refresh-icon">🔄</span>
-    <span>Aggiorna news</span>
+    <span>Sincronizza Feed</span>
   </button>
 
   <script>
-    // MATRICI PER LA GENERAZIONE PROCEDURALE ANTI-FAKE NEWS
-    const topics = [
-      { name: "Intelligenza Artificiale", tag: "technology", imgKeyword: "computer,tech" },
-      { name: "Sostenibilità Ambientale", tag: "environment", imgKeyword: "nature,forest" },
-      { name: "Sicurezza Informatica", tag: "security", imgKeyword: "code,data" },
-      { name: "Mercati Finanziari", tag: "finance", imgKeyword: "city,business" },
-      { name: "Salute e Medicina", tag: "health", imgKeyword: "science,laboratory" },
-      { name: "Automotive ed Energia", tag: "energy", imgKeyword: "car,energy" }
-    ];
-
-    const triggers = [
-      "Smentita la circolare virale su ipotetici rischi imminenti",
-      "Analisi indipendente chiarisce l'inconsistenza dei report circolati",
-      "Rilevato un nuovo pattern di disinformazione coordinata",
-      "Verifica delle fonti sui dati difformi diffusi nelle ultime ore",
-      "Neutralizzata campagna di notizie alterate ad alto impatto"
-    ];
-
-    const methods = [
-      "I controlli incrociati condotti dai laboratori di fact-checking mediante analisi spettrale e verifica dei registri ufficiali",
-      "L'esame dei dati grezzi estratti dai sensori di monitoraggio e validati da enti terzi indipendenti",
-      "L'audit tecnico eseguito sugli algoritmi di distribuzione delle notizie e sulle catene di tracciabilità digitale",
-      "Il confronto sistematico tra i report preliminari non verificati e i protocolli ufficiali approvati"
-    ];
-
-    const impacts = [
-      "hanno confermato la completa manipolazione dei contenuti, ripristinando la corretta ricostruzione dei fatti.",
-      "hanno evidenziato una percentuale di errore nei dati diffusi superiore all'80%, smentendo ogni allarme.",
-      "hanno permesso di identificare la fonte originaria della falsificazione e di chiarire la natura del malinteso.",
-      "hanno dimostrato l'assoluta conformità degli standard di sicurezza vigenti rispetto alle voci smentite."
-    ];
-
-    // Registro combinazioni già generate per evitare qualsiasi duplicato
-    const generatedHashes = new Set();
-    let globalCounter = 0;
+    let currentPage = 1;
     let isLoading = false;
+    let hasMoreArticles = true;
+    const loadedArticleUrls = new Set();
 
-    // ALGORITMO PROCEDURALE ANTI-REPETIZIONE
-    function generateUniqueArticle() {
-      let topic, trigger, method, impact, hash;
-      let attempts = 0;
+    function createNewsCard(article) {
+      const card = document.createElement('article');
+      card.className = 'news-card';
 
-      // Continua a ciclare finché non trova una combinazione mai creata prima
-      do {
-        topic = topics[Math.floor(Math.random() * topics.length)];
-        trigger = triggers[Math.floor(Math.random() * triggers.length)];
-        method = methods[Math.floor(Math.random() * methods.length)];
-        impact = impacts[Math.floor(Math.random() * impacts.length)];
-        
-        hash = `${topic.name}-${trigger.substring(0, 10)}-${method.substring(0, 10)}`;
-        attempts++;
-      } while (generatedHashes.has(hash) && attempts < 100);
-
-      generatedHashes.add(hash);
-      globalCounter++;
-
-      const title = `${topic.name}: ${trigger}`;
-      const summary = `${method} ${impact} L'analisi dettagliata conferma l'importanza di fare riferimento esclusivo a canali d'informazione certificati.`;
-      
-      // Generazione immagine pertinente tramite Unsplash con lock per evitare immagini identiche
-      const imageUrl = `https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=700&q=80`;
-      const dynamicImgUrl = `https://loremflickr.com/700/350/${topic.imgKeyword}?lock=${globalCounter}`;
-
-      return {
-        id: globalCounter,
-        title: title,
-        summary: summary,
-        image: dynamicImgUrl
-      };
-    }
-
-    // Costruisce la carta della notizia
-    function createNewsCard(item) {
-      const article = document.createElement('article');
-      article.className = 'news-card';
-
-      article.innerHTML = `
+      card.innerHTML = `
         <img class="news-image" 
-             src="${item.image}" 
-             alt="${item.title}" 
+             src="${article.image_url}" 
+             alt="${article.title}" 
              loading="lazy"
-             onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=700&q=80'">
+             onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=60'">
         <div class="news-content">
-          <span class="badge">Fact-Check #${item.id}</span>
-          <h2>${item.title}</h2>
-          <p>${item.summary}</p>
+          <span class="badge">${article.category}</span>
+          <h2>${article.title}</h2>
+          <p>${article.content}</p>
+          <span class="hashtags">${article.hashtags}</span>
+          <a class="read-more" href="${article.url}" target="_blank" rel="noopener noreferrer">Leggi fonte originale →</a>
         </div>
       `;
-      return article;
+      return card;
     }
 
-    // Caricamento asincrono al raggiungimento del fondo della pagina
-    function loadMoreNews(count = 2) {
-      if (isLoading) return;
+    async function loadMoreNews() {
+      if (isLoading || !hasMoreArticles) return;
       isLoading = true;
 
-      const feed = document.getElementById('news-feed');
+      const sentinelText = document.getElementById('sentinel-text');
+      sentinelText.textContent = "Caricamento notizie dal server...";
 
-      setTimeout(() => {
-        for (let i = 0; i < count; i++) {
-          const newArticle = generateUniqueArticle();
-          feed.appendChild(createNewsCard(newArticle));
+      try {
+        const response = await fetch(`/api/articles?page=${currentPage}&limit=5`);
+        const data = await response.json();
+
+        if (data.articles && data.articles.length > 0) {
+          const feed = document.getElementById('news-feed');
+          
+          data.articles.forEach(article => {
+            if (!loadedArticleUrls.has(article.url)) {
+              loadedArticleUrls.add(article.url);
+              feed.appendChild(createNewsCard(article));
+            }
+          });
+
+          currentPage++;
+          hasMoreArticles = data.has_more;
+          
+          if (!hasMoreArticles) {
+            sentinelText.textContent = "Hai letto tutte le notizie disponibili.";
+          } else {
+            sentinelText.textContent = "Scorri per altre notizie...";
+          }
+        } else {
+          hasMoreArticles = false;
+          sentinelText.textContent = "Nessuna notizia nel database. Clicca su 'Sincronizza Feed'.";
         }
+      } catch (error) {
+        console.error("Errore nel recupero notizie:", error);
+        sentinelText.textContent = "Errore di connessione al server.";
+      } finally {
         isLoading = false;
-      }, 400);
+      }
     }
 
-    // Pulsante "Aggiorna news": svuota il feed e genera nuovi articoli
-    function handleRefresh() {
+    async function handleRefresh() {
       const icon = document.getElementById('refresh-icon');
-      const feed = document.getElementById('news-feed');
-      
       icon.classList.add('spin');
-      feed.innerHTML = '';
-      
-      loadMoreNews(3);
-      
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => {
-        icon.classList.remove('spin');
-      }, 600);
+
+      try {
+        await fetch('/refresh', { 
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        
+        document.getElementById('news-feed').innerHTML = '';
+        loadedArticleUrls.clear();
+        currentPage = 1;
+        hasMoreArticles = true;
+        
+        await loadMoreNews();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {
+        console.error("Errore durante il refresh:", e);
+      } finally {
+        setTimeout(() => {
+          icon.classList.remove('spin');
+        }, 600);
+      }
     }
 
-    // Observer per lo scroll infinito
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting && !isLoading) {
-          loadMoreNews(2);
+        if (entry.isIntersecting && !isLoading && hasMoreArticles) {
+          loadMoreNews();
         }
       });
-    }, {
-      rootMargin: '250px'
-    });
+    }, { rootMargin: '250px' });
 
-    // Inizializzazione
     document.addEventListener('DOMContentLoaded', () => {
-      loadMoreNews(3);
+      loadMoreNews();
       observer.observe(document.getElementById('sentinel'));
     });
   </script>
