@@ -1,7 +1,11 @@
 import feedparser
 import re
 from bs4 import BeautifulSoup
+from deep_translator import GoogleTranslator
 from database import init_db, save_article
+
+# Inizializzazione del traduttore in lingua italiana
+translator = GoogleTranslator(source='auto', target='it')
 
 RSS_FEEDS = {
     "Quantum & AI": [
@@ -17,7 +21,19 @@ RSS_FEEDS = {
     ]
 }
 
+def translate_to_italian(text):
+    """Traduce il testo in italiano gestendo eventuali blocchi o eccezioni."""
+    if not text or not text.strip():
+        return ""
+    try:
+        # Tronca a 500 caratteri per evitare timeout o blocchi nell'API di traduzione
+        return translator.translate(text[:500])
+    except Exception as e:
+        print(f"⚠️ Errore durante la traduzione: {e}")
+        return text
+
 def extract_image_from_entry(entry):
+    """Estrae l'immagine dall'entry del feed RSS o dall'HTML integrato."""
     if hasattr(entry, 'media_content') and entry.media_content:
         for media in entry.media_content:
             if 'url' in media:
@@ -43,22 +59,23 @@ def extract_image_from_entry(entry):
     return None
 
 def generate_hashtags(title, category):
+    """Genera hashtag dinamici in italiano basati sul contesto."""
     title_lower = title.lower()
     tags = set()
     
     if "Quantum" in category:
-        tags.add("#QuantumComputing")
+        tags.add("#CalcoloQuantistico")
         tags.add("#DeepTech")
     elif "Finanza" in category:
-        tags.add("#TechFinance")
-        tags.add("#MarketNews")
+        tags.add("#FinanzaTech")
+        tags.add("#Mercati")
     elif "Crypto" in category:
-        tags.add("#Crypto")
+        tags.add("#Cripto")
         tags.add("#Web3")
         
-    if "ai" in title_lower or "artificial intelligence" in title_lower:
-        tags.add("#AI")
-        tags.add("#TechTrends")
+    if "ai" in title_lower or "intelligenza" in title_lower or "intelligence" in title_lower:
+        tags.add("#IA")
+        tags.add("#Innovazione")
     if "nvidia" in title_lower:
         tags.add("#NVIDIA")
         tags.add("#Hardware")
@@ -66,50 +83,37 @@ def generate_hashtags(title, category):
         tags.add("#Bitcoin")
     if "ethereum" in title_lower or "eth" in title_lower:
         tags.add("#Ethereum")
-    if "sec" in title_lower or "regulation" in title_lower:
-        tags.add("#Regulation")
         
     if len(tags) < 2:
-        tags.add("#Innovation")
-        tags.add("#GlobalTech")
+        tags.add("#Futuro")
+        tags.add("#Tecnologia")
         
     return " ".join(list(tags)[:3])
 
-def create_engaging_description(entry, title):
-    """
-    Estrae il testo reale dall'articolo RSS, rimuove l'HTML e crea 
-    un riassunto incisivo e dinamico.
-    """
+def create_engaging_description(entry, title_it):
+    """Estrae e pulisce il riassunto reale dell'articolo prima di tradurlo."""
     raw_content = ""
-    
-    # Cerca il testo nel summary o nel content dell'RSS
     if hasattr(entry, 'summary') and entry.summary:
         raw_content = entry.summary
     elif hasattr(entry, 'content') and entry.content:
         raw_content = entry.content[0].value
 
-    # Pulizia del tag HTML
     soup = BeautifulSoup(raw_content, 'html.parser')
     clean_text = soup.get_text().strip()
-    
-    # Rimuove spazi doppi o newlines
     clean_text = re.sub(r'\s+', ' ', clean_text)
 
-    # Se il feed non ha testo o è troppo breve, usa il titolo come spunto
     if not clean_text or len(clean_text) < 30:
-        return f"Cosa c'è dietro gli ultimi sviluppi su {title}? Scopri i punti chiave e l'impatto sul settore."
+        return f"Quali sono gli impatti e le prospettive future di {title_it}? Scopri tutti i dettagli."
 
-    # Se il testo è lungo, lo taglia in modo pulito alla fine di una parola (max 180 caratteri)
     if len(clean_text) > 180:
         short_text = clean_text[:175].rsplit(' ', 1)[0]
-        # Pulisce eventuale punteggiatura rimasta prima dei puntini
         short_text = re.sub(r'[,;:\-–]$', '', short_text)
-        return f"{short_text}..."
+        clean_text = f"{short_text}..."
 
-    return clean_text
+    return translate_to_italian(clean_text)
 
 def run_pipeline():
-    print("🔄 Aggiornamento notizie, hashtag e riassunti dinamici...")
+    print("🔄 Aggiornamento notizie, traduzione in italiano e generazione hashtag...")
     init_db()
     
     total_saved = 0
@@ -118,13 +122,18 @@ def run_pipeline():
         for url in urls:
             try:
                 parsed_feed = feedparser.parse(url)
-                for entry in parsed_feed.entries[:15]:
-                    title = entry.get('title', 'Titolo non disponibile')
+                for entry in parsed_feed.entries[:10]:
+                    raw_title = entry.get('title', 'Titolo non disponibile')
                     link = entry.get('link', '#')
                     
-                    # Genera il riassunto reale ed accattivante
-                    description = create_engaging_description(entry, title)
-                    hashtags = generate_hashtags(title, category)
+                    # 1. Traduzione del Titolo
+                    title_it = translate_to_italian(raw_title)
+                    
+                    # 2. Traduzione del Riassunto
+                    description_it = create_engaging_description(entry, title_it)
+                    
+                    # 3. Generazione Hashtag
+                    hashtags = generate_hashtags(raw_title, category)
                     
                     img_url = extract_image_from_entry(entry)
                     if not img_url:
@@ -133,9 +142,9 @@ def run_pipeline():
                     published = entry.get('published', 'Recente')
                     
                     save_article(
-                        title=title,
+                        title=title_it,
                         url=link,
-                        content=description,
+                        content=description_it,
                         image_url=img_url,
                         category=category,
                         hashtags=hashtags,
@@ -143,9 +152,9 @@ def run_pipeline():
                     )
                     total_saved += 1
             except Exception as e:
-                print(f"⚠️ Errore lettura feed {url}: {e}")
+                print(f"⚠️ Errore durante la lettura o traduzione del feed {url}: {e}")
                 
-    print(f"✅ Sincronizzazione completata: {total_saved} articoli elaborati.")
+    print(f"✅ Sincronizzazione completata: {total_saved} articoli elaborati in italiano.")
 
 if __name__ == "__main__":
     run_pipeline()
