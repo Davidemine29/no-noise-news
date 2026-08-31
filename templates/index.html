@@ -24,7 +24,7 @@
     .container {
       max-width: 680px;
       margin: 0 auto;
-      padding-bottom: 90px; /* Spazio di sicurezza per non coprire l'ultima news */
+      padding-bottom: 90px;
     }
 
     header {
@@ -45,6 +45,12 @@
       margin-bottom: 20px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
       border-left: 5px solid #198754;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .news-image {
@@ -52,6 +58,7 @@
       height: 220px;
       object-fit: cover;
       display: block;
+      background-color: #e9ecef;
     }
 
     .news-content {
@@ -82,7 +89,16 @@
       line-height: 1.4;
     }
 
-    /* PULSANTE AGGIORNA NEWS FIXED IN BASSO A DESTRA */
+    /* CARICAMENTO IN FONDO (INFINITE SCROLL) */
+    .loading-sentinel {
+      text-align: center;
+      padding: 20px 0;
+      color: #6c757d;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* PULSANTE AGGIORNA FIXED IN BASSO A DESTRA */
     .btn-refresh-fixed {
       position: fixed;
       bottom: 24px;
@@ -134,45 +150,12 @@
     </header>
 
     <!-- FEED NEWS COMPLETO -->
-    <main id="news-feed">
-      
-      <article class="news-card">
-        <img class="news-image" src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=700&q=80" alt="Giornali e notizie">
-        <div class="news-content">
-          <span class="badge">Verificato</span>
-          <h2>Rilevato nuovo pattern di disinformazione sui social</h2>
-          <p>Analisi automatizzata sulle fonti secondarie confermano l'inconsistenza dei dati circolati nelle ultime 24 ore.</p>
-        </div>
-      </article>
+    <main id="news-feed"></main>
 
-      <article class="news-card">
-        <img class="news-image" src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=700&q=80" alt="Fact checking e tecnologia">
-        <div class="news-content">
-          <span class="badge">Verificato</span>
-          <h2>Aggiornamento algoritmi di fact-checking</h2>
-          <p>Il modello di verifica incrociata ha ridotto i falsi positivi del 14% nel monitoraggio delle notizie locali.</p>
-        </div>
-      </article>
-
-      <article class="news-card">
-        <img class="news-image" src="https://images.unsplash.com/photo-1590055531615-f16d36ffe8ec?auto=format&fit=crop&w=700&q=80" alt="Meteo e dati">
-        <div class="news-content">
-          <span class="badge">Verificato</span>
-          <h2>Analisi dati sui report meteorologici alterati</h2>
-          <p>Smentita la circolare riguardante gli eventi estremi non tracciati dai radar ufficiali.</p>
-        </div>
-      </article>
-
-      <article class="news-card">
-        <img class="news-image" src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=700&q=80" alt="Sicurezza e rete">
-        <div class="news-content">
-          <span class="badge">Verificato</span>
-          <h2>Sicurezza informatica nelle reti di informazione</h2>
-          <p>Nuovi standard adottati per garantire l'autenticità delle immagini giornalistiche alla fonte.</p>
-        </div>
-      </article>
-
-    </main>
+    <!-- Target per l'Intersection Observer (infinite scroll) -->
+    <div id="sentinel" class="loading-sentinel">
+      <span>Caricamento nuove notizie...</span>
+    </div>
   </div>
 
   <!-- PULSANTE AGGIORNA FIXED -->
@@ -182,18 +165,89 @@
   </button>
 
   <script>
+    // Pool di notizie con immagini dinamiche Unsplash
+    const newsTopics = [
+      { title: "Verifica fonti su intelligenza artificiale e deepfake", summary: "Impostati nuovi standard di filigrana digitale per identificare video manipolati nelle notizie di cronaca.", query: "cybersecurity" },
+      { title: "Fact-checking sui dati di transizione energetica", summary: "L'analisi indipendente smentisce le stime diffuse dai blog non certificati sui consumi di rete.", query: "energy" },
+      { title: "Smentita la bufala scientifica sulla salute pubblica", summary: "I report clinici ufficiali confermano l'infondatezza delle voci circolate sui canali di messaggistica.", query: "science" },
+      { title: "Rilevamento reti bot su piattaforme social", summary: "Disattivati oltre ventimila profili automatizzati responsabili della condivisione di articoli civetta.", query: "technology" },
+      { title: "Analisi di veridicità sui mercati finanziari", summary: "Gli organismi di controllo chiariscono la natura del report speculativo diffuso in mattinata.", query: "finance" },
+      { title: "Monitoraggio satellitare contro la disinformazione", summary: "Le immagini ad alta risoluzione smentiscono le ricostruzioni grafiche alterate degli eventi locali.", query: "satellite" }
+    ];
+
+    let isLoading = false;
+    let articleIdCounter = 1;
+
+    // Genera una singola card notizia
+    function createNewsCard(item) {
+      const article = document.createElement('article');
+      article.className = 'news-card';
+      
+      // Usa l'API Unsplash Source per generare un'immagine unica correlata per ogni articolo
+      const imageUrl = `https://picsum.photos/700/350?random=${articleIdCounter++}`;
+
+      article.innerHTML = `
+        <img class="news-image" src="${imageUrl}" alt="${item.title}" loading="lazy">
+        <div class="news-content">
+          <span class="badge">Verificato</span>
+          <h2>${item.title}</h2>
+          <p>${item.summary}</p>
+        </div>
+      `;
+      return article;
+    }
+
+    // Funzione per caricare un blocco di nuove notizie nel feed
+    function loadMoreNews(count = 3) {
+      if (isLoading) return;
+      isLoading = true;
+
+      const feed = document.getElementById('news-feed');
+      const sentinel = document.getElementById('sentinel');
+      sentinel.style.opacity = '1';
+
+      setTimeout(() => {
+        for (let i = 0; i < count; i++) {
+          const randomIndex = Math.floor(Math.random() * newsTopics.length);
+          const topic = newsTopics[randomIndex];
+          feed.appendChild(createNewsCard(topic));
+        }
+        isLoading = false;
+      }, 600); // Ritardo simulato per la chiamata API
+    }
+
+    // Gestione click pulsante "Aggiorna news" (Reset + Ricaricamento top)
     function handleRefresh() {
       const icon = document.getElementById('refresh-icon');
+      const feed = document.getElementById('news-feed');
       
-      // Attiva l'animazione di rotazione dell'icona
       icon.classList.add('spin');
       
-      // Simula il caricamento dei dati aggiornati (1 secondo)
       setTimeout(() => {
+        feed.innerHTML = '';
+        articleIdCounter = Math.floor(Math.random() * 100);
+        loadMoreNews(4);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         icon.classList.remove('spin');
-        console.log("Notizie aggiornate con successo.");
-      }, 1000);
+      }, 800);
     }
+
+    // Inizializzazione Intersection Observer per lo scroll infinito
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !isLoading) {
+          loadMoreNews(3);
+        }
+      });
+    }, {
+      rootMargin: '200px' // Inizia a caricare 200px prima di raggiungere la fine
+    });
+
+    // Avvio al caricamento della pagina
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMoreNews(4); // Caricamento iniziale
+      observer.observe(document.getElementById('sentinel'));
+    });
   </script>
 
 </body>
