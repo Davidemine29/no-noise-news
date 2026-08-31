@@ -75,23 +75,41 @@ def generate_hashtags(title, category):
         
     return " ".join(list(tags)[:3])
 
-def create_engaging_description(raw_html):
-    if not raw_html:
-        return "Tutti i dettagli e le implicazioni di questa svolta nell'articolo completo."
-        
-    soup = BeautifulSoup(raw_html, 'html.parser')
-    text = soup.get_text().strip()
+def create_engaging_description(entry, title):
+    """
+    Estrae il testo reale dall'articolo RSS, rimuove l'HTML e crea 
+    un riassunto incisivo e dinamico.
+    """
+    raw_content = ""
     
-    if not text:
-        return "Scopri i retroscena e l'impatto sul settore nell'analisi completa."
-        
-    if len(text) > 200:
-        text = text[:197].rsplit(' ', 1)[0] + "..."
-        
-    return f"{text} Leggi l'analisi completa per scoprire tutti i dettagli."
+    # Cerca il testo nel summary o nel content dell'RSS
+    if hasattr(entry, 'summary') and entry.summary:
+        raw_content = entry.summary
+    elif hasattr(entry, 'content') and entry.content:
+        raw_content = entry.content[0].value
+
+    # Pulizia del tag HTML
+    soup = BeautifulSoup(raw_content, 'html.parser')
+    clean_text = soup.get_text().strip()
+    
+    # Rimuove spazi doppi o newlines
+    clean_text = re.sub(r'\s+', ' ', clean_text)
+
+    # Se il feed non ha testo o è troppo breve, usa il titolo come spunto
+    if not clean_text or len(clean_text) < 30:
+        return f"Cosa c'è dietro gli ultimi sviluppi su {title}? Scopri i punti chiave e l'impatto sul settore."
+
+    # Se il testo è lungo, lo taglia in modo pulito alla fine di una parola (max 180 caratteri)
+    if len(clean_text) > 180:
+        short_text = clean_text[:175].rsplit(' ', 1)[0]
+        # Pulisce eventuale punteggiatura rimasta prima dei puntini
+        short_text = re.sub(r'[,;:\-–]$', '', short_text)
+        return f"{short_text}..."
+
+    return clean_text
 
 def run_pipeline():
-    print("🔄 Aggiornamento notizie, hashtag e descrizioni accattivanti...")
+    print("🔄 Aggiornamento notizie, hashtag e riassunti dinamici...")
     init_db()
     
     total_saved = 0
@@ -100,13 +118,12 @@ def run_pipeline():
         for url in urls:
             try:
                 parsed_feed = feedparser.parse(url)
-                # Legge fino a 15 notizie per ciascun feed invece di 5
                 for entry in parsed_feed.entries[:15]:
                     title = entry.get('title', 'Titolo non disponibile')
                     link = entry.get('link', '#')
-                    raw_summary = entry.get('summary', entry.get('description', ''))
                     
-                    description = create_engaging_description(raw_summary)
+                    # Genera il riassunto reale ed accattivante
+                    description = create_engaging_description(entry, title)
                     hashtags = generate_hashtags(title, category)
                     
                     img_url = extract_image_from_entry(entry)
