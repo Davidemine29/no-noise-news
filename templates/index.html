@@ -1,239 +1,161 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>No Noise News | Tech, Quantum, Finance & Crypto</title>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --ad-bg: #1e1b4b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-color: #38bdf8;
-            --hashtag-color: #818cf8;
-            --border-color: #334155;
-            --ad-border: #6366f1;
-            --sponsor-badge: #f59e0b;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>No Nise News - Verification Dashboard</title>
+  
+  <style>
+    /* 1. RESET E STILI BASE */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f0f2f5;
+      color: #1c1e21;
+      padding: 20px;
+    }
 
-        .header-container {
-            max-width: 1200px;
-            margin: 0 auto 20px auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-        }
+    /* 2. LAYOUT MAIN CONTAINER */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      /* Spazio in fondo per non far coprire l'ultima news dal pulsante fixed */
+      padding-bottom: 90px; 
+    }
 
-        h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            color: var(--accent-color);
-        }
+    header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
 
-        .btn-refresh {
-            background-color: var(--accent-color);
-            color: #0f172a;
-            padding: 10px 18px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
+    header h1 {
+      color: #0d6efd;
+      font-size: 1.8rem;
+    }
 
-        .btn-refresh:hover {
-            opacity: 0.9;
-        }
+    /* 3. SCHEDE NEWS */
+    .news-card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border-left: 5px solid #198754; /* Indicatore di notizia verificata */
+    }
 
-        /* BANNER PUBBLICITARIO SUPERIORE */
-        .top-ad-banner {
-            max-width: 1200px;
-            margin: 0 auto 30px auto;
-            background-color: var(--card-bg);
-            border: 1px dashed var(--ad-border);
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
+    .news-card .badge {
+      display: inline-block;
+      background-color: #e8f5e9;
+      color: #198754;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
 
-        .grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 24px;
-        }
+    .news-card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
 
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
+    .news-card p {
+      color: #4b4f56;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
 
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
+    /* 4. PULSANTE AGGIORNA FIXED (In basso a destra) */
+    .btn-refresh-fixed {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
 
-        /* STILE SPECIFICO PER CARD SPONSORIZZATE / AFFILIATE */
-        .card-sponsored {
-            background-color: var(--ad-bg);
-            border: 1px solid var(--ad-border);
-        }
+      display: flex;
+      align-items: center;
+      gap: 10px;
 
-        .sponsor-badge {
-            background-color: var(--sponsor-badge);
-            color: #000;
-            font-size: 0.65rem;
-            font-weight: 800;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 6px;
-        }
+      padding: 14px 24px;
+      background-color: #0d6efd;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 600;
 
-        .card-img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            background-color: #0f172a;
-        }
+      border: none;
+      border-radius: 50px;
+      box-shadow: 0 4px 14px rgba(13, 110, 253, 0.39);
+      cursor: pointer;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
 
-        .card-body {
-            padding: 18px;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
+    .btn-refresh-fixed:hover {
+      background-color: #0b5ed7;
+      transform: translateY(-2px);
+    }
 
-        .card-category {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--accent-color);
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
+    .btn-refresh-fixed:active {
+      transform: translateY(0);
+    }
 
-        .card-title {
-            font-size: 1.15rem;
-            line-height: 1.4;
-            margin: 0 0 10px 0;
-            color: var(--text-main);
-        }
+    /* Animazione rotazione icona durante l'aggiornamento */
+    .spin {
+      animation: spin 1s linear infinite;
+    }
 
-        .card-description {
-            font-size: 0.9rem;
-            line-height: 1.5;
-            color: var(--text-muted);
-            margin-bottom: 15px;
-            flex-grow: 1;
-        }
-
-        .card-hashtags {
-            font-size: 0.85rem;
-            color: var(--hashtag-color);
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid var(--border-color);
-            padding-top: 12px;
-            margin-top: auto;
-        }
-
-        .card-link {
-            color: var(--accent-color);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .card-link:hover {
-            text-decoration: underline;
-        }
-
-        .btn-affiliate {
-            background-color: var(--ad-border);
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: bold;
-        }
-    </style>
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <h1>⚡ No Noise News</h1>
-        <a href="/refresh" class="btn-refresh">🔄 Aggiorna Notizie</a>
-    </div>
+  <div class="container">
+    <header>
+      <h1>No Nise News</h1>
+      <p>Feed notizie verificate anti-fake news</p>
+    </header>
 
-    <!-- SPORTELLO BANNER HEADER (AdSense / Carbon Ads) -->
-    <div class="top-ad-banner">
-        <!-- Incolla qui il codice fornito da AdSense / Ezoic / Carbon Ads -->
-        <span>SPAZIO PUBBLICITARIO BANNER (728x90 / Carbon Ads)</span>
-    </div>
+    <main id="news-feed">
+      <article class="news-card">
+        <span class="badge">Verificato</span>
+        <h2>Rilevato nuovo pattern di disinformazione sui social</h2>
+        <p>Analisi automatizzata sulle fonti secondarie confermano l'inconsistenza dei dati circolati nelle ultime 24 ore.</p>
+      </article>
 
-    <div class="grid">
-        {% for article in articles %}
-        
-        <!-- INSERISCI UNA CARD SPONSORIZZATA/AFFILIATA OGNI 3 NOTIZIE -->
-        {% if loop.index == 3 %}
-        <div class="card card-sponsored">
-            <img src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=60" alt="Hardware Wallet" class="card-img">
-            <div class="card-body">
-                <span class="card-category">PROMOZIONALE <span class="sponsor-badge">SPONSOR</span></span>
-                <h2 class="card-title">Proteggi i tuoi Asset Crypto con un Hardware Wallet</h2>
-                <p class="card-description">Metti al sicuro le tue chiavi private offline. Scopri le offerte sulle soluzioni di archiviazione con supporto multi-chain.</p>
-                <div class="card-hashtags">#CryptoSecurity #HardwareWallet #Web3</div>
-                <div class="card-footer">
-                    <!-- Sostituisci questo link con il tuo referral link (es. Ledger/Trezor) -->
-                    <a href="https://example.com/affiliate-link" target="_blank" class="btn-affiliate">Scopri l'offerta &rarr;</a>
-                </div>
-            </div>
-        </div>
-        {% endif %}
+      <article class="news-card">
+        <span class="badge">Verificato</span>
+        <h2>Aggiornamento algoritmi di fact-checking</h2>
+        <p>Il modello di verifica incrociata ha ridotto i falsi positivi del 14% nel monitoraggio delle notizie locali.</p>
+      </article>
+    </main>
+  </div>
 
-        <!-- CARD NOTIZIA NORMALE -->
-        <div class="card">
-            <img src="{{ article.image_url }}" alt="News Image" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'">
-            
-            <div class="card-body">
-                <span class="card-category">{{ article.category }}</span>
-                <h2 class="card-title">{{ article.title }}</h2>
-                <p class="card-description">{{ article.content }}</p>
-                <div class="card-hashtags">{{ article.hashtags }}</div>
-                
-                <div class="card-footer">
-                    <a href="{{ article.url }}" target="_blank" class="card-link">Leggi su Fonte Ufficiale &rarr;</a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
+  <button id="refresh-btn" class="btn-refresh-fixed" onclick="handleRefresh()">
+    <span id="refresh-icon">🔄</span>
+    <span>Aggiorna news</span>
+  </button>
+
+  <script>
+    function handleRefresh() {
+      const icon = document.getElementById('refresh-icon');
+      
+      // Avvia animazione rotazione
+      icon.classList.add('spin');
+      
+      // Simula chiamata API / Aggiornamento dati (1 secondo)
+      setTimeout(() => {
+        icon.classList.remove('spin');
+        console.log("News aggiornate con successo.");
+      }, 1000);
+    }
+  </script>
 
 </body>
 </html>
