@@ -1,3 +1,15 @@
+import sys
+
+# Patch di sicurezza per la gestione di cgi su versioni recenti di Python
+try:
+    import cgi
+except ImportError:
+    try:
+        import legacy_cgi as cgi
+        sys.modules['cgi'] = cgi
+    except ImportError:
+        pass
+
 import feedparser
 import re
 from bs4 import BeautifulSoup
@@ -26,7 +38,6 @@ def translate_to_italian(text):
     if not text or not text.strip():
         return ""
     try:
-        # Tronca a 500 caratteri per evitare timeout o blocchi nell'API di traduzione
         return translator.translate(text[:500])
     except Exception as e:
         print(f"⚠️ Errore durante la traduzione: {e}")
