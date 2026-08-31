@@ -3,3 +3,5 @@ feedparser==6.0.10
 beautifulsoup4==4.12.2
 deep-translator==1.11.4
 gunicorn==21.2.0
+legacy-cgi==2.6.2
+setuptools==69.0.3
