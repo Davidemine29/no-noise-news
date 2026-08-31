@@ -6,7 +6,7 @@
   <title>No Nise News - Verification Dashboard</title>
   
   <style>
-    /* STILI BASE E RESET */
+    /* RESET E STILI BASE */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -154,7 +154,7 @@
 
     <!-- Target per l'Intersection Observer (infinite scroll) -->
     <div id="sentinel" class="loading-sentinel">
-      <span>Caricamento nuove notizie...</span>
+      <span id="sentinel-text">Caricamento nuove notizie...</span>
     </div>
   </div>
 
@@ -165,29 +165,40 @@
   </button>
 
   <script>
-    // Pool di notizie con immagini dinamiche Unsplash
-    const newsTopics = [
-      { title: "Verifica fonti su intelligenza artificiale e deepfake", summary: "Impostati nuovi standard di filigrana digitale per identificare video manipolati nelle notizie di cronaca.", query: "cybersecurity" },
-      { title: "Fact-checking sui dati di transizione energetica", summary: "L'analisi indipendente smentisce le stime diffuse dai blog non certificati sui consumi di rete.", query: "energy" },
-      { title: "Smentita la bufala scientifica sulla salute pubblica", summary: "I report clinici ufficiali confermano l'infondatezza delle voci circolate sui canali di messaggistica.", query: "science" },
-      { title: "Rilevamento reti bot su piattaforme social", summary: "Disattivati oltre ventimila profili automatizzati responsabili della condivisione di articoli civetta.", query: "technology" },
-      { title: "Analisi di veridicità sui mercati finanziari", summary: "Gli organismi di controllo chiariscono la natura del report speculativo diffuso in mattinata.", query: "finance" },
-      { title: "Monitoraggio satellitare contro la disinformazione", summary: "Le immagini ad alta risoluzione smentiscono le ricostruzioni grafiche alterate degli eventi locali.", query: "satellite" }
+    // ARCHIVIO REALE NOTIZIE (Dal presente al passato)
+    const newsArchive = [
+      { id: 101, title: "Rilevato nuovo pattern di disinformazione sui social", summary: "Analisi automatizzata sulle fonti secondarie confermano l'inconsistenza dei dati circolati nelle ultime 24 ore.", category: "tech" },
+      { id: 102, title: "Aggiornamento algoritmi di fact-checking", summary: "Il modello di verifica incrociata ha ridotto i falsi positivi del 14% nel monitoraggio delle notizie locali.", category: "computer" },
+      { id: 103, title: "Verifica fonti su intelligenza artificiale e deepfake", summary: "Impostati nuovi standard di filigrana digitale per identificare video manipolati nelle notizie di cronaca.", category: "code" },
+      { id: 104, title: "Analisi dati sui report meteorologici alterati", summary: "Smentita la circolare riguardante gli eventi estremi non tracciati dai radar ufficiali.", category: "weather" },
+      { id: 105, title: "Sicurezza informatica nelle reti di informazione", summary: "Nuovi standard adottati per garantire l'autenticità delle immagini giornalistiche alla fonte.", category: "security" },
+      { id: 106, title: "Fact-checking sui dati di transizione energetica", summary: "L'analisi indipendente smentisce le stime diffuse dai blog non certificati sui consumi di rete.", category: "city" },
+      { id: 107, title: "Smentita la bufala scientifica sulla salute pubblica", summary: "I report clinici ufficiali confermano l'infondatezza delle voci circolate sui canali di messaggistica.", category: "science" },
+      { id: 108, title: "Rilevamento reti bot su piattaforme social", summary: "Disattivati oltre ventimila profili automatizzati responsabili della condivisione di articoli civetta.", category: "network" },
+      { id: 109, title: "Analisi di veridicità sui mercati finanziari", summary: "Gli organismi di controllo chiariscono la natura del report speculativo diffuso in mattinata.", category: "business" },
+      { id: 110, title: "Monitoraggio satellitare contro la disinformazione", summary: "Le immagini ad alta risoluzione smentiscono le ricostruzioni grafiche alterate degli eventi locali.", category: "space" },
+      { id: 111, title: "Archivio 2025: Verifica dichiarazioni settore automotive", summary: "Analisi dei dati storici rilasciati sui test di emissione ed efficienza batterie.", category: "car" },
+      { id: 112, title: "Archivio 2024: Revisione storiche notizie su scoperte archeologiche", summary: "Rettifica sui reperti rinvenuti in area mediterranea a seguito di datazione al carbonio.", category: "history" }
     ];
 
+    // REGISTRO DEGLI ARTICOLI GIÀ MOSTRATI (Impedisce qualsiasi duplicato)
+    const displayedArticleIds = new Set();
     let isLoading = false;
-    let articleIdCounter = 1;
 
-    // Genera una singola card notizia
+    // Genera una singola card notizia con fallback immagine sicuro
     function createNewsCard(item) {
       const article = document.createElement('article');
       article.className = 'news-card';
       
-      // Usa l'API Unsplash Source per generare un'immagine unica correlata per ogni articolo
-      const imageUrl = `https://picsum.photos/700/350?random=${articleIdCounter++}`;
+      // Immagine sicura via LoremFlickr basata sulla categoria dell'articolo + ID unico
+      const imageUrl = `https://loremflickr.com/700/350/${item.category}?lock=${item.id}`;
 
       article.innerHTML = `
-        <img class="news-image" src="${imageUrl}" alt="${item.title}" loading="lazy">
+        <img class="news-image" 
+             src="${imageUrl}" 
+             alt="${item.title}" 
+             loading="lazy"
+             onerror="this.src='https://via.placeholder.com/700x350/0d6efd/ffffff?text=No+Nise+News'">
         <div class="news-content">
           <span class="badge">Verificato</span>
           <h2>${item.title}</h2>
@@ -197,42 +208,68 @@
       return article;
     }
 
-    // Funzione per caricare un blocco di nuove notizie nel feed
+    // ALGORITMO DI ESTRAZIONE ARTICOLI (Senza ripetizioni)
+    function fetchUniqueArticles(count = 3) {
+      const availableArticles = newsArchive.filter(article => !displayedArticleIds.has(article.id));
+      
+      // Se finiscono gli articoli nell'archivio
+      if (availableArticles.length === 0) {
+        return [];
+      }
+
+      // Mescola e prende gli articoli non ancora mostrati
+      const shuffled = [...availableArticles].sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, count);
+
+      // Registra gli ID estratti
+      selected.forEach(article => displayedArticleIds.add(article.id));
+      return selected;
+    }
+
+    // Caricamento nuove notizie nel feed
     function loadMoreNews(count = 3) {
       if (isLoading) return;
       isLoading = true;
 
       const feed = document.getElementById('news-feed');
-      const sentinel = document.getElementById('sentinel');
-      sentinel.style.opacity = '1';
-
+      const sentinelText = document.getElementById('sentinel-text');
+      
       setTimeout(() => {
-        for (let i = 0; i < count; i++) {
-          const randomIndex = Math.floor(Math.random() * newsTopics.length);
-          const topic = newsTopics[randomIndex];
-          feed.appendChild(createNewsCard(topic));
+        const nextArticles = fetchUniqueArticles(count);
+
+        if (nextArticles.length > 0) {
+          nextArticles.forEach(item => {
+            feed.appendChild(createNewsCard(item));
+          });
+        } else {
+          sentinelText.textContent = "Hai raggiunto la fine dell'archivio notizie verificate.";
         }
+
         isLoading = false;
-      }, 600); // Ritardo simulato per la chiamata API
+      }, 500);
     }
 
-    // Gestione click pulsante "Aggiorna news" (Reset + Ricaricamento top)
+    // Gestione click pulsante "Aggiorna news" (Reset + Ricaricamento)
     function handleRefresh() {
       const icon = document.getElementById('refresh-icon');
       const feed = document.getElementById('news-feed');
+      const sentinelText = document.getElementById('sentinel-text');
       
       icon.classList.add('spin');
       
       setTimeout(() => {
+        // Reset totale per permettere un nuovo giro di estrazione
         feed.innerHTML = '';
-        articleIdCounter = Math.floor(Math.random() * 100);
-        loadMoreNews(4);
+        displayedArticleIds.clear();
+        sentinelText.textContent = "Caricamento nuove notizie...";
+
+        loadMoreNews(3);
         window.scrollTo({ top: 0, behavior: 'smooth' });
         icon.classList.remove('spin');
-      }, 800);
+      }, 600);
     }
 
-    // Inizializzazione Intersection Observer per lo scroll infinito
+    // Inizializzazione Intersection Observer
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting && !isLoading) {
@@ -240,12 +277,12 @@
         }
       });
     }, {
-      rootMargin: '200px' // Inizia a caricare 200px prima di raggiungere la fine
+      rootMargin: '150px'
     });
 
     // Avvio al caricamento della pagina
     document.addEventListener('DOMContentLoaded', () => {
-      loadMoreNews(4); // Caricamento iniziale
+      loadMoreNews(3);
       observer.observe(document.getElementById('sentinel'));
     });
   </script>
